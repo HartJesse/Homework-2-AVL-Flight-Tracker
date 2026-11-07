@@ -29,7 +29,7 @@ int balanceFactor(const Node* node) {
     {
         return 0;
     }
-    return nodeHeight(node->right) - nodeHeight(node->left);
+    return nodeHeight(node->left) - nodeHeight(node->right);
 }
 
 /*when an imbalance on a nodes right subtree is detected
@@ -78,58 +78,63 @@ Node* rotateRight(Node* root) {
 
 /*check if we need to rebalance the tree and if so, which way
 4 cases for rebalancing, cases are ordered:
-1. Right Right
-2. Left Left
-3. Right Left
-4. Left Right*/
+1. Left Left
+2. Right Left
+3. Left Right
+4. Right Left*/
 Node* rebalance(Node* root) {
-    if (balanceFactor(root) == 2 && balanceFactor(root->right) > 0)
+    if (root == nullptr)
     {
-        root = rotateLeft(root);
+        return nullptr;
     }
-    else if (balanceFactor(root) == -2 && balanceFactor(root->left) < 0)
+
+    if (balanceFactor(root) == 2 && balanceFactor(root->left) >= 0)
     {
         root = rotateRight(root);
     }
-    else if (balanceFactor(root) == 2 && balanceFactor(root->right) < 0)
+    else if (balanceFactor(root) == -2 && balanceFactor(root->right) <= 0)
     {
-        root->left = rotateRight(root->left);
         root = rotateLeft(root);
+    }
+    else if (balanceFactor(root) == 2 && balanceFactor(root->left) < 0)
+    {
+        root->left = rotateLeft(root->left);
+        root = rotateRight(root);
     }
     else if (balanceFactor(root) == -2 && balanceFactor(root->right) > 0)
     {
-        root->right = rotateLeft(root->right);
-        root = rotateRight(root);
+        root->right = rotateRight(root->right);
+        root = rotateLeft(root);
     }
     return root;
-} // TODO
+}
 
 /* recursively inserts a new flight node into the AVL 
 tree while maintaining binary search tree ordering, 
 updating heights, and rebalancing where necessary*/
 Node* insertNode(Node* root, Node* newNode) {
-    if (root->data.departure > newNode->data.departure)
+    if (root == nullptr)
     {
-      if (root->left == nullptr)
-      {
-          root->left = newNode;
-      }
-      else
-      {
-          insertNode(root->left, newNode);
-      } 
+        newNode->left = nullptr;
+        newNode->right = nullptr;
+        newNode->height = 0;
+        return newNode;
+    }
+
+    if (newNode->data.departure < root->data.departure)
+    {
+        root->left = insertNode(root->left, newNode);
+    }
+    else if (newNode->data.departure > root->data.departure)
+    {
+        root->right = insertNode(root->right, newNode);
     }
     else
     {
-        if (root->right == nullptr)
-        {
-             root->right = newNode;
-        }
-        else
-        {
-            insertNode(root->right, newNode);
-        }
+        return root;
     }
+
+    updateHeight(root);
     return rebalance(root);
 }
 
@@ -156,11 +161,11 @@ Node* deleteNode(Node* root, int departure) {
     {
         if (departure < root->data.departure)
         {
-            root->left = delete(root->left, departure);
+            root->left = deleteNode(root->left, departure);
         }
         else
         {
-            root->right = delete(root->right, departure);
+            root->right = deleteNode(root->right, departure);
         }
     }
     else
@@ -187,6 +192,8 @@ Node* deleteNode(Node* root, int departure) {
         }
         
     }
+
+    updateHeight(root);
     return rebalance(root);
 }
 
